@@ -8,6 +8,7 @@ library(rlist)
 lca.3<- rlist::list.load('lca_3.rdata')
 load('./df_ex.rdata')
 
+# Kapitel 4.1
 # Anzeige einiger posterior probabilites
 
 round(lca.3$posterior[6:10,],3)
@@ -59,7 +60,7 @@ chisq.test(table(df_ex$educ3, df_ex$predclass))
 # Durchschnittsalter der Klassen
 tapply(df_ex$age, df_ex$predclass, mean)
 
-
+# Kapitel 4.2
 # Durchführung LCA mit Kovariaten 
 lca.var.cov<- cbind(Q122, Q123,Q124,Q125, Q126, Q127, Q128, Q129) ~ educ3+age
 
@@ -67,7 +68,7 @@ set.seed(0608)
 lca.3.cov <- poLCA(lca.var.cov, data = df_ex, nclass = 3, na.rm = FALSE,
                     nrep=10, verbose=FALSE)
 
-# Alternativ: laden aus GitHub
+# Alternativ: laden aus dem GitHub-Repositorium (lokal gespeicherte Liste)
 #lca.3.cov <- rlist::list.load('lca.3.cov.rdata')
 
 
@@ -83,6 +84,7 @@ lca.3.cov <- poLCA(lca.var.cov, df_ex, nclass=3, na.rm=FALSE,
 
 
 # Visualisierung marginaler Effekte
+# niedrige Bildung
 educ_low <- cbind(1,1,0,c(18:96)) 
 #1 Matrix-Objekt
 exb.edulow <- exp(educ_low %*% lca.3.cov$coeff) 
@@ -97,7 +99,7 @@ text(50, 0.6, "migrationskritisch")
 text(30, 0.1, "migrationsaffin")
 
 
-## ----04-covariates-17, include=TRUE--------------------------------------------------------------------------------------------------------
+# mittlere Bildung
 educ_med <- cbind(1,0,1,c(18:96)) 
 exb.edumed <- exp(educ_med %*% lca.3.cov$coeff) 
 matplot(c(18:96), (cbind(1,exb.edumed)/(1+rowSums(exb.edumed))), 
@@ -110,8 +112,7 @@ text(80, 0.75, "migrationskritisch")
 text(50, 0.4, "migrationsaffin")
 
 
-## ----04-covariates-18, include=TRUE--------------------------------------------------------------------------------------------------------
-educ_hi <- cbind(1,0,0,c(18:96)) 
+# hohe Bildung
 exb.eduhi <- exp(educ_hi %*% lca.3.cov$coeff) 
 matplot(c(18:96), (cbind(1,exb.eduhi)/(1+rowSums(exb.eduhi))), 
         main = "Abbildung 7: Marginaler Effekt des Alters bei hoher Bildung", 
