@@ -9,29 +9,39 @@ library(reshape2)  #Datenbearbeitung
 library(tidyLPA)  # LRT-Test (VLMR)
 library(glca)   # LRT-Test (BLRT)
 
-
-# Variante 1: Aufruf des direkt beim WVS heruntergeladenenen Datensatzes, subsetting
+# Kapitel 3.1
+# Variante 1: Aufruf des direkt beim WVS heruntergeladenenen Datensatzes (sollte lokal im gleichen Ordner wie die Syntax gespeichert sein), subsetting
 
 w7g <- read_excel("./F00013243-WVS_Wave_7_Germany_ExcelTxt_v5.0.xlsx")
 w7g_sub <- w7g %>% dplyr::select(124:126,155:162,297,313)
 
 
-# Variante 2: Laden des Daten-Subsets aus GitHub
+# Variante 2: Laden des Daten-Subsets aus GitHub (sollte lokal im gleichen Ordner wie die Syntax gespeichert sein)
 load("./w7g_sub.RData")
 
 
 # Erstellen eines Subdatensatzes für die Analysen
 df_ex <- w7g_sub %>% dplyr::select(4:13)
-names(df_ex) <- sub(": Immigration in your country:", "", names(df_ex)) #Namen abkürzen
+names(df_ex) <- sub(": Immigration in your country:", "", names(df_ex)) # Namen abkürzen
 
 
-# Häufigkeitstabelle
+# Häufigkeitstabelle (Tabelle 3.1)
+
 t1 <- apply(df_ex[,1:8],2, table) #absolute Häufigkeiten
 t1_r <- round(proportions(t1,2), 2) # relative Häufigkeiten
 t1_rt <- t(t1_r) # transponieren
 
+# Alternative mit dem pipe-operator
+t1_rt <- df_ex[, 1:8] %>%
+  apply(2, table) %>%                # Absolute Häufigkeiten berechnen
+  proportions(2) %>%                 # Relative Häufigkeiten berechnen
+  round(2) %>%                       # Runden
+  t()                                # Transponieren
 
 
+print(t1_rt)
+
+# Kapitel 3.3
 
 #Prüfung auf Variablentyp
 class(df_ex$`Q122 Fills useful jobs in the workforce`)
@@ -79,6 +89,7 @@ df_ex <- set_label(df_ex, label = collabs)
 # Variablenobjekt erstellen für LCA
 lca.var<- cbind(Q122, Q123,Q124,Q125, Q126, Q127, Q128, Q129) ~1
 
+# Kapitel 3.5
 
 # Liste für Ergebnisse der LCA mit Klassen 1 bis 10 erstellen, LCA durchführen 
 set.seed(100221)
@@ -193,11 +204,28 @@ R2_entropy
 p_gsq <- round(pchisq(fit$Gsq, df=fit$resid.df, lower.tail = FALSE),3)
 p_gsq
 
+# Kapitel 3.6
 
 # LCA nach Startwerten ordnen
 probs.start.new <- poLCA.reorder(lc[[3]]$probs.start,order(lc[[3]]$P,decreasing=TRUE))
 lca.3 <- poLCA(lca.var, df_ex, nclass=3, na.rm=FALSE, probs.start = probs.start.new)
 
+# Schönere Darstellung 
+obj <- names(df_ex[,-c(9:11)])
+col_names <- c("agree", "disagree", "hard to say")
+
+matrices <- list()
+for (mat_name in obj) {
+  mat <- lca.3$probs[[mat_name]]
+  colnames(mat) <- col_names
+  matrices[[mat_name]]<- mat
+}
+
+var_labs <- get_label(df_ex[,-c(9:11)])
+new_names <- unname(var_labs)
+names(matrices) <- new_names
+matrices <- lapply(matrices,round,2)
+print(matrices)
 
 # Plot
 plot(lca.3)
